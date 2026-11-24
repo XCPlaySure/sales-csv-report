@@ -136,3 +136,38 @@ export const growing = {
     { region: 'R', outlet_id: 'O2', date: '2026-10-01', net_sales: 200 },
   ],
 };
+
+export const nonConsecutive = {
+  mapping: { date: 0 },
+  records: [
+    { region: 'R', outlet_id: 'O1', date: '2026-09-01', net_sales: 100 },
+    { region: 'R', outlet_id: 'O2', date: '2026-11-01', net_sales: 200 },
+  ],
+};
+
+export const negativeBaseline = {
+  mapping: { date: 0 },
+  records: [
+    { region: 'R', outlet_id: 'O1', date: '2026-09-01', net_sales: -100 },
+    { region: 'R', outlet_id: 'O2', date: '2026-10-01', net_sales: 50 },
+  ],
+};
+
+export const blankInvoice = {
+  mapping: { invoice_no: 0 },
+  records: [
+    { region: 'R', outlet_id: 'O1', net_sales: 100, invoice_no: '' },
+    { region: 'R', outlet_id: 'O2', net_sales: 100, invoice_no: null },
+    { region: 'R', outlet_id: 'O3', net_sales: 100, invoice_no: '   ' },
+  ],
+};
+
+export const conflictedOutlet = {
+  mapping: {},
+  records: [
+    { region: 'Jabar', outlet_id: 'O1', net_sales: 100 },
+    { region: 'JAWA BARAT', outlet_id: 'O1', net_sales: 100 },
+    { region: 'Jabar', outlet_id: 'O2', net_sales: 1000 },
+    { region: 'JAWA BARAT', outlet_id: 'O3', net_sales: 1000 },
+  ],
+};

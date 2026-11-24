@@ -82,6 +82,16 @@ describe('dashboardHtml', () => {
     expect(html).toContain('<td>1</td><td>B1</td>');
     expect(html).toContain('<td>1</td><td>Delta</td>');
   });
+
+  it('notes outlet ids that appear under multiple regions', () => {
+    const html = dashboardFor(fixtures.conflictedOutlet);
+    expect(html).toContain('1 outlet ID(s) appear under more than one region label');
+  });
+
+  it('notes why a month-over-month comparison is omitted', () => {
+    expect(dashboardFor(fixtures.nonConsecutive)).toContain('Months in this file are not consecutive');
+    expect(dashboardFor(fixtures.negativeBaseline)).toContain('earlier month has no positive net sales');
+  });
 });
 
 describe('mappingPanelHtml', () => {

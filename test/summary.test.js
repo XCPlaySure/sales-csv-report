@@ -74,8 +74,29 @@ describe('summaryBasis', () => {
     expect(text).toBe('Based on 2 data rows, 2 outlets, 1 regions.');
   });
 
+  it('omits a zero invoice count', () => {
+    const text = summaryBasis(analyze(fixtures.blankInvoice.records, fixtures.blankInvoice.mapping));
+    expect(text).toBe('Based on 3 data rows, 3 outlets, 1 regions.');
+  });
+
   it('returns an empty string when there are no data rows', () => {
     expect(summaryBasis(analyze([], {}))).toBe('');
+  });
+});
+
+describe('buildSummary guarded comparison and invoice caveats', () => {
+  it('omits growth for non-consecutive months', () => {
+    expect(summaryFor(fixtures.nonConsecutive)).not.toContain('month over month');
+  });
+
+  it('omits growth for a negative baseline', () => {
+    expect(summaryFor(fixtures.negativeBaseline)).not.toContain('month over month');
+  });
+
+  it('omits the invoice clause and reports blank invoice lines', () => {
+    const text = summaryFor(fixtures.blankInvoice);
+    expect(text).not.toContain('invoices');
+    expect(text).toContain('3 line(s) have no invoice number');
   });
 });
 

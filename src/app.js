@@ -29,6 +29,15 @@ export function initApp(doc, adapters) {
     uploadPrompt.hidden = true;
   }
 
+  function skippedMessage(skipped) {
+    const numeric = skipped.filter((item) => item.reason !== 'blank_required').length;
+    const blank = skipped.length - numeric;
+    const reasons = [];
+    if (numeric > 0) reasons.push(`${numeric} had an invalid required numeric value`);
+    if (blank > 0) reasons.push(`${blank} had a blank region or outlet ID`);
+    return `${skipped.length} row(s) were skipped: ${reasons.join('; ')}.`;
+  }
+
   function renderMapping(mapping) {
     const validation = validateMapping(mapping);
     mappingEl.innerHTML = mappingPanelHtml(state.headers, state.sample, mapping, validation);
@@ -82,9 +91,10 @@ export function initApp(doc, adapters) {
       return;
     }
 
-    const { records, skipped } = parseRows(state.rows, mapping);
+    const { records, skipped, invalidOptionals } = parseRows(state.rows, mapping);
     if (records.length === 0) {
-      showFault('No usable data rows were found. Check the mapped columns and re-upload the file.');
+      const detail = skippedMessage(skipped);
+      showFault(`No usable data rows were found. ${detail} Check the mapped columns and re-upload the file.`);
       return;
     }
 
@@ -102,10 +112,17 @@ export function initApp(doc, adapters) {
     state.mapping = mapping;
     state.summary = summary;
 
+    const notes = [];
     if (skipped.length > 0) {
-      faultEl.innerHTML = faultHtml(
-        `${skipped.length} row(s) were skipped because a mapped numeric value was not a number. Fix the file and re-upload for complete results.`,
+      notes.push(`${skippedMessage(skipped)} Fix the file and re-upload for complete results.`);
+    }
+    if (invalidOptionals.length > 0) {
+      notes.push(
+        `${invalidOptionals.length} row(s) had an invalid optional numeric value; that field was omitted.`,
       );
+    }
+    if (notes.length > 0) {
+      faultEl.innerHTML = faultHtml(notes.join(' '));
       faultEl.hidden = false;
     } else {
       faultEl.innerHTML = '';

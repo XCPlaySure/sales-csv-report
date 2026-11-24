@@ -16,11 +16,25 @@ const MONTHS = [
 ];
 
 export function monthKey(date) {
-  const match = /^(\d{4})-(\d{2})/.exec(String(date));
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date).trim());
   if (!match) return null;
+  const year = Number(match[1]);
   const month = Number(match[2]);
-  if (month < 1 || month > 12) return null;
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
   return `${match[1]}-${match[2]}`;
+}
+
+function monthIndex(key) {
+  return Number(key.slice(0, 4)) * 12 + Number(key.slice(5, 7)) - 1;
 }
 
 export function monthLabel(key) {
@@ -59,6 +73,7 @@ export function analyze(records, mapping) {
   let negativeLines = 0;
   let negativeSum = 0;
   let missingSalesman = 0;
+  let blankInvoices = 0;
 
   const hasInvoice = mapping.invoice_no != null;
   const hasDate = mapping.date != null;
@@ -76,21 +91,26 @@ export function analyze(records, mapping) {
       negativeSum += net;
     }
 
-    if (hasInvoice) invoiceSet.add(record.invoice_no);
+    if (hasInvoice) {
+      const invoice = String(record.invoice_no ?? '').trim();
+      if (invoice) invoiceSet.add(invoice);
+      else blankInvoices += 1;
+    }
     if (hasSalesman && record.salesman.trim() === '') missingSalesman += 1;
 
     addTo(regionMap, record.region, net);
     if (hasBranch) addTo(branchMap, record.branch, net);
 
-    if (!outletMap.has(record.outlet_id)) {
-      outletMap.set(record.outlet_id, {
+    const outletKey = `${record.outlet_id}\u0000${record.region}`;
+    if (!outletMap.has(outletKey)) {
+      outletMap.set(outletKey, {
         id: record.outlet_id,
         name: record.outlet_name || record.outlet_id,
         region: record.region,
         net: 0,
       });
     }
-    outletMap.get(record.outlet_id).net += net;
+    outletMap.get(outletKey).net += net;
 
     if (hasDate) {
       const key = monthKey(record.date);
@@ -116,7 +136,15 @@ export function analyze(records, mapping) {
 
   const outlets = [...outletMap.values()];
   const regionCounts = new Map();
-  for (const outlet of outlets) addTo(regionCounts, outlet.region, 1);
+  const regionsByOutlet = new Map();
+  for (const outlet of outlets) {
+    addTo(regionCounts, outlet.region, 1);
+    if (!regionsByOutlet.has(outlet.id)) regionsByOutlet.set(outlet.id, new Set());
+    regionsByOutlet.get(outlet.id).add(outlet.region);
+  }
+  const outletRegionConflicts = [...regionsByOutlet.values()].filter(
+    (regions) => regions.size > 1,
+  ).length;
 
   for (const outlet of outlets) {
     const average = regionMap.get(outlet.region) / regionCounts.get(outlet.region);
@@ -141,10 +169,21 @@ export function analyze(records, mapping) {
   const months = [...monthMap.keys()].sort();
   const monthSeries = months.map((month) => ({ month, net: monthMap.get(month) }));
   let growth = null;
+  let nonConsecutiveMonths = false;
+  let growthBaselineInvalid = false;
   if (months.length >= 2) {
-    const previous = monthMap.get(months[months.length - 2]);
-    const last = monthMap.get(months[months.length - 1]);
-    if (previous !== 0) growth = (last - previous) / previous;
+    const previousKey = months[months.length - 2];
+    const lastKey = months[months.length - 1];
+    const previous = monthMap.get(previousKey);
+    const last = monthMap.get(lastKey);
+    nonConsecutiveMonths = monthIndex(lastKey) - monthIndex(previousKey) !== 1;
+    if (nonConsecutiveMonths) {
+      growth = null;
+    } else if (previous <= 0) {
+      growthBaselineInvalid = true;
+    } else {
+      growth = (last - previous) / previous;
+    }
   }
 
   return {
@@ -175,6 +214,10 @@ export function analyze(records, mapping) {
       negativeLines,
       negativeSum,
       missingSalesman,
+      blankInvoices,
+      nonConsecutiveMonths,
+      growthBaselineInvalid,
+      outletRegionConflicts,
     },
   };
 }

@@ -22,14 +22,15 @@ describe('golden sales.csv', () => {
     expect(agg.totals.gross).toBe(1758432000);
     expect(agg.totals.net).toBe(1728036900);
     expect(agg.totals.invoices).toBe(824);
-    expect(agg.totals.outlets).toBe(52);
+    expect(agg.totals.outlets).toBe(61);
     expect(agg.regions).toHaveLength(10);
+    expect(agg.flags.outletRegionConflicts).toBe(7);
     expect(agg.weakest.map((outlet) => outlet.id)).toEqual([
+      'OUT1013',
       'OUT1003',
-      'OUT1026',
-      'OUT1035',
-      'OUT1045',
-      'OUT1042',
+      'OUT1013',
+      'OUT1033',
+      'OUT1006',
     ]);
   });
 });

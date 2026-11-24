@@ -18,6 +18,8 @@ export const FIELD_SYNONYMS = {
 
 export const REQUIRED_FIELDS = ['region', 'outlet_id', 'net_sales'];
 
+export const REQUIRED_TEXT_FIELDS = ['region', 'outlet_id'];
+
 export const NUMERIC_FIELDS = [
   'qty_carton',
   'price_per_carton',
@@ -163,26 +165,36 @@ export function validateMapping(mapping) {
 export function parseRows(rows, mapping) {
   const records = [];
   const skipped = [];
+  const invalidOptionals = [];
   const netDerived =
     mapping.net_sales == null && mapping.gross_sales != null && mapping.discount != null;
+  const requiredNumeric = new Set(
+    netDerived ? ['gross_sales', 'discount'] : ['net_sales'],
+  );
   const numericMapped = NUMERIC_FIELDS.filter((field) => mapping[field] != null);
 
   rows.forEach((row, rowIndex) => {
     const record = {};
+    const rowOptionals = [];
     let badField = null;
 
     for (const field of numericMapped) {
       const raw = row[mapping[field]];
-      const value = raw === undefined || String(raw).trim() === '' ? NaN : Number(raw);
+      const blank = raw === undefined || String(raw).trim() === '';
+      const value = blank ? NaN : Number(raw);
       if (Number.isNaN(value)) {
-        badField = field;
-        break;
+        if (requiredNumeric.has(field)) {
+          badField = field;
+          break;
+        }
+        if (!blank) rowOptionals.push(field);
+        continue;
       }
       record[field] = value;
     }
 
     if (badField !== null) {
-      skipped.push({ rowIndex, field: badField });
+      skipped.push({ rowIndex, field: badField, reason: 'invalid_numeric' });
       return;
     }
 
@@ -192,12 +204,24 @@ export function parseRows(rows, mapping) {
       }
     }
 
+    const blankRequired = REQUIRED_TEXT_FIELDS.find(
+      (field) => mapping[field] != null && String(record[field]).trim() === '',
+    );
+    if (blankRequired) {
+      skipped.push({ rowIndex, field: blankRequired, reason: 'blank_required' });
+      return;
+    }
+
     if (netDerived) {
       record.net_sales = record.gross_sales - record.discount;
+    }
+
+    for (const field of rowOptionals) {
+      invalidOptionals.push({ rowIndex, field });
     }
 
     records.push(record);
   });
 
-  return { records, skipped };
+  return { records, skipped, invalidOptionals };
 }

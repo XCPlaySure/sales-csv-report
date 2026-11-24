@@ -12,7 +12,7 @@ export function buildSummary(agg) {
   const { totals, flags } = agg;
 
   let headline = `${periodLabel(agg)} the business booked ${formatIDR(totals.net)} in net sales`;
-  if (totals.invoices != null) headline += ` from ${totals.invoices} invoices`;
+  if (totals.invoices > 0) headline += ` from ${totals.invoices} invoices`;
   parts.push(`${headline}.`);
 
   if (flags.negativeTotal) {
@@ -57,13 +57,17 @@ export function buildSummary(agg) {
     );
   }
 
+  if (flags.blankInvoices > 0) {
+    parts.push(`${flags.blankInvoices} line(s) have no invoice number and are excluded from the invoice count.`);
+  }
+
   return parts.join(' ');
 }
 
 export function summaryBasis(agg, skippedCount = 0) {
   if (agg.totals.records === 0) return '';
   const parts = [`Based on ${agg.totals.records} data rows`];
-  if (agg.totals.invoices != null) parts.push(`${agg.totals.invoices} invoices`);
+  if (agg.totals.invoices > 0) parts.push(`${agg.totals.invoices} invoices`);
   parts.push(`${agg.totals.outlets} outlets`, `${agg.regions.length} regions`);
   if (skippedCount > 0) parts.push(`${skippedCount} skipped row(s)`);
   return `${parts.join(', ')}.`;

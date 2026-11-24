@@ -28,21 +28,26 @@ salesman. It adapts to those cases instead of rejecting the file.
 - Treats branch, date, invoice number, outlet name/type, salesman, brand, SKU,
   carton quantity, carton price, gross sales, and discount as optional. Missing
   optional fields simply hide the views that need them.
-- Skips rows whose mapped numeric values cannot be parsed and reports the count
-  as a file issue with guidance to fix and re-upload.
+- Skips rows with a blank region/outlet ID or an invalid required numeric value,
+  and reports them as a file issue with guidance to fix and re-upload. Invalid
+  optional numeric values are omitted from that field with a warning, while the
+  row's net sales stay in the totals.
 
 ### Analysis
 
 - Aggregates net sales, gross sales, discounts, invoice count, outlets, and
   branches.
 - Groups regions by the exact text in the file. `Jawa Barat` and `JAWA BARAT`
-  stay separate; region cleanup remains with the data owner.
+  stay separate; region cleanup remains with the data owner. An outlet ID seen
+  under multiple region labels is tracked once per region so tier calculations
+  use the correct average.
 - Computes each region's share of total net sales; suppresses share when the
   total is zero or negative.
-- Extracts months from dates and computes month-over-month growth only when at
-  least two valid months exist.
+- Validates complete dates and computes month-over-month growth only for
+  consecutive months with a positive earlier-month baseline. Otherwise the
+  comparison is omitted and the dashboard notes why.
 - Ranks the **five lowest-selling outlets** by absolute net sales, grouped by
-  outlet ID.
+  outlet ID and region.
 - Tags outlets by net sales relative to their region's average:
 
 | Tier | Share of region average |
@@ -53,7 +58,8 @@ salesman. It adapts to those cases instead of rejecting the file.
 | OK | 100% or above |
 
 - Adds explanatory notes for single month, single region, near-equal outlets,
-  negative or zero totals, refund lines, and missing salesman lines.
+  negative or zero totals, refund lines, missing salesman lines, blank invoice
+  numbers, non-consecutive months, and outlet IDs spanning regions.
 - Formats money Indonesian-style (`Rp 1.728.036.900`) and percentages with one
   decimal and a comma (`72,7%`).
 
@@ -84,11 +90,11 @@ salesman. It adapts to those cases instead of rejecting the file.
 
 ### Quality gates
 
-- 92 tests across 10 files, with 100% line, branch, function, and statement
+- 112 tests across 10 files, with 100% line, branch, function, and statement
   coverage enforced by Istanbul.
 - A golden test runs the full pipeline against the bundled `sales.csv`
   (1,891 rows, 15 columns) and checks known figures: net `Rp 1.728.036.900`,
-  824 invoices, 52 outlets, and 10 raw region strings.
+  824 invoices, 61 outlet-region pairs, and 10 raw region strings.
 - GitHub Actions runs `npm ci && npm run coverage` on every push and pull
   request.
 

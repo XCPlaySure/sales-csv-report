@@ -88,12 +88,22 @@ The system SHALL treat branch, date, qty, discount, outlet name, salesman, brand
 
 ### Requirement: Row parsing and fault reporting
 
-The system SHALL parse each data row, skip rows whose mapped numeric fields cannot be parsed, and report the skipped-row count as a fault of the file with guidance to fix it.
+The system SHALL skip rows whose required identifiers are blank or whose required numeric values cannot be parsed, and report them. Invalid optional numeric values SHALL be omitted from those fields with a warning while the row's required sales data is kept.
 
-#### Scenario: Invalid numeric row
+#### Scenario: Invalid required numeric value
 
-- **WHEN** a row has a non-numeric value in a mapped numeric field
+- **WHEN** net sales, or gross sales and discount when net sales is derived, is non-numeric
 - **THEN** that row is skipped and the system reports how many rows were skipped and why
+
+#### Scenario: Blank required identifier
+
+- **WHEN** region or outlet id is blank
+- **THEN** that row is skipped and the system reports the blank identifier
+
+#### Scenario: Invalid optional numeric value
+
+- **WHEN** an optional mapped numeric field is non-numeric but net sales is valid
+- **THEN** the row is kept, that field is omitted, and a warning is reported
 
 #### Scenario: Empty or unusable file
 

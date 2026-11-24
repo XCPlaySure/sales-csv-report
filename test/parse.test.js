@@ -173,7 +173,9 @@ describe('parseRows', () => {
       mapping,
     );
     expect(records).toEqual([]);
-    expect(skipped).toEqual([{ rowIndex: 0, field: 'net_sales' }]);
+    expect(skipped).toEqual([
+      { rowIndex: 0, field: 'net_sales', reason: 'invalid_numeric' },
+    ]);
   });
 
   it('skips a row with an empty numeric value', () => {
@@ -189,12 +191,16 @@ describe('parseRows', () => {
     expect(skipped[0].field).toBe('net_sales');
   });
 
-  it('skips a row with a non-numeric optional numeric field', () => {
-    const { skipped } = parseRows(
+  it('keeps a valid row and omits a non-numeric optional numeric field', () => {
+    const { records, skipped, invalidOptionals } = parseRows(
       [['R', 'O1', '100', '120', '20', 'Sam', 'd', 'I1', 'A', 'B', 'x']],
       mapping,
     );
-    expect(skipped[0].field).toBe('qty_carton');
+    expect(records).toHaveLength(1);
+    expect(records[0].net_sales).toBe(100);
+    expect(records[0].qty_carton).toBeUndefined();
+    expect(skipped).toEqual([]);
+    expect(invalidOptionals).toEqual([{ rowIndex: 0, field: 'qty_carton' }]);
   });
 
   it('derives net sales from gross minus discount', () => {
@@ -207,5 +213,73 @@ describe('parseRows', () => {
     const textMapping = { region: 0, outlet_id: 1, net_sales: 2, salesman: 5 };
     const { records } = parseRows([['R', 'O1', '100']], textMapping);
     expect(records[0].salesman).toBe('');
+  });
+
+  it('omits a blank optional numeric value without a warning', () => {
+    const { records, skipped, invalidOptionals } = parseRows(
+      [['R', 'O1', '100', '', '20']],
+      { region: 0, outlet_id: 1, net_sales: 2, gross_sales: 3, discount: 4 },
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0].gross_sales).toBeUndefined();
+    expect(skipped).toEqual([]);
+    expect(invalidOptionals).toEqual([]);
+  });
+
+  it('omits invalid optional gross sales while keeping valid net sales', () => {
+    const { records, invalidOptionals } = parseRows(
+      [['R', 'O1', '100', 'bad', '20']],
+      { region: 0, outlet_id: 1, net_sales: 2, gross_sales: 3, discount: 4 },
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0].gross_sales).toBeUndefined();
+    expect(records[0].net_sales).toBe(100);
+    expect(invalidOptionals).toEqual([{ rowIndex: 0, field: 'gross_sales' }]);
+  });
+
+  it('reports every invalid optional numeric field in a row', () => {
+    const { records, invalidOptionals } = parseRows(
+      [['R', 'O1', '100', 'bad', 'also bad', 'Sam', 'd', 'I1', 'A', 'B', 'x']],
+      mapping,
+    );
+    expect(records).toHaveLength(1);
+    expect(invalidOptionals.map((item) => item.field)).toEqual([
+      'qty_carton',
+      'gross_sales',
+      'discount',
+    ]);
+  });
+
+  it('skips a row with a blank region', () => {
+    const { records, skipped } = parseRows([['', 'O1', '100']], {
+      region: 0,
+      outlet_id: 1,
+      net_sales: 2,
+    });
+    expect(records).toEqual([]);
+    expect(skipped).toEqual([{ rowIndex: 0, field: 'region', reason: 'blank_required' }]);
+  });
+
+  it('skips a row with a blank outlet id', () => {
+    const { records, skipped } = parseRows([['R', '   ', '100']], {
+      region: 0,
+      outlet_id: 1,
+      net_sales: 2,
+    });
+    expect(records).toEqual([]);
+    expect(skipped).toEqual([{ rowIndex: 0, field: 'outlet_id', reason: 'blank_required' }]);
+  });
+
+  it('skips a derived row with an invalid required numeric value', () => {
+    const derivedMapping = { region: 0, outlet_id: 1, gross_sales: 2, discount: 3 };
+    const { records, skipped } = parseRows([['R', 'O1', 'bad', '20']], derivedMapping);
+    expect(records).toEqual([]);
+    expect(skipped).toEqual([{ rowIndex: 0, field: 'gross_sales', reason: 'invalid_numeric' }]);
+  });
+
+  it('does not require unmapped text fields', () => {
+    const { records, skipped } = parseRows([['R', '100']], { region: 0, net_sales: 1 });
+    expect(records).toHaveLength(1);
+    expect(skipped).toEqual([]);
   });
 });

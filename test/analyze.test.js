@@ -107,6 +107,48 @@ describe('analyze dates and growth', () => {
   });
 });
 
+describe('analyze growth guards', () => {
+  it('omits growth for non-consecutive months', () => {
+    const agg = run(fixtures.nonConsecutive);
+    expect(agg.months).toEqual(['2026-09', '2026-11']);
+    expect(agg.growth).toBeNull();
+    expect(agg.flags.nonConsecutiveMonths).toBe(true);
+  });
+
+  it('omits growth when the earlier month is negative', () => {
+    const agg = run(fixtures.negativeBaseline);
+    expect(agg.growth).toBeNull();
+    expect(agg.flags.growthBaselineInvalid).toBe(true);
+  });
+
+  it('keeps consecutive positive growth', () => {
+    const agg = run(fixtures.growing);
+    expect(agg.growth).toBeCloseTo(1);
+    expect(agg.flags.nonConsecutiveMonths).toBe(false);
+    expect(agg.flags.growthBaselineInvalid).toBe(false);
+  });
+});
+
+describe('analyze blank invoices', () => {
+  it('counts only nonblank invoice ids', () => {
+    const agg = run(fixtures.blankInvoice);
+    expect(agg.totals.invoices).toBe(0);
+    expect(agg.flags.blankInvoices).toBe(3);
+  });
+});
+
+describe('analyze conflicting outlet regions', () => {
+  it('keeps each outlet-region pair separate for tiers', () => {
+    const agg = run(fixtures.conflictedOutlet);
+    expect(agg.totals.outlets).toBe(4);
+    expect(agg.flags.outletRegionConflicts).toBe(1);
+    const split = agg.outlets.find((outlet) => outlet.id === 'O1');
+    expect(split.region).toBe('Jabar');
+    expect(split.net).toBe(100);
+    expect(split.regionAverage).toBe(550);
+  });
+});
+
 describe('analyze empty input', () => {
   it('returns empty aggregates', () => {
     const agg = analyze([], {});
@@ -123,6 +165,9 @@ describe('month helpers', () => {
   it('returns null for unreadable dates', () => {
     expect(monthKey('not-a-date')).toBeNull();
     expect(monthKey('2026-13-01')).toBeNull();
+    expect(monthKey('2026-09garbage')).toBeNull();
+    expect(monthKey('2026-09-99')).toBeNull();
+    expect(monthKey('2026-02-30')).toBeNull();
   });
 
   it('extracts a month key', () => {

@@ -121,6 +121,17 @@ export function dashboardHtml(agg) {
   if (flags.singleRegion) {
     parts.push('<p class="note">Only one region in this file.</p>');
   }
+  if (flags.outletRegionConflicts > 0) {
+    parts.push(
+      `<p class="note">${flags.outletRegionConflicts} outlet ID(s) appear under more than one region label; each region is reported separately.</p>`,
+    );
+  }
+  if (flags.nonConsecutiveMonths) {
+    parts.push('<p class="note">Months in this file are not consecutive; no month-over-month comparison is shown.</p>');
+  }
+  if (flags.growthBaselineInvalid) {
+    parts.push('<p class="note">Month-over-month comparison is omitted because the earlier month has no positive net sales.</p>');
+  }
 
   return parts.join('');
 }

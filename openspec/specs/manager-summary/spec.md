@@ -10,10 +10,20 @@ Produces a one-paragraph plain-English summary for a sales manager in which ever
 
 The system SHALL build the summary from clauses where each clause is emitted only when its condition holds, and MUST NOT assert any comparison, ranking, or judgment the data does not support.
 
-#### Scenario: Growth clause only with two or more months
+#### Scenario: Growth clause only with a valid baseline
 
-- **WHEN** the data spans at least two months
+- **WHEN** the data spans consecutive months and the earlier month has positive net sales
 - **THEN** the summary includes a month-over-month clause using "grew" or "fell" according to the actual change
+
+#### Scenario: No growth clause for non-consecutive months
+
+- **WHEN** the latest two observed months are not consecutive
+- **THEN** the summary omits any month-over-month claim and the dashboard notes the gap
+
+#### Scenario: No growth clause for a non-positive baseline
+
+- **WHEN** the earlier month has zero or negative net sales
+- **THEN** the summary omits any month-over-month claim and the dashboard notes the reason
 
 #### Scenario: No growth clause for a single month
 
@@ -46,7 +56,7 @@ The system SHALL include branch-level detail in the summary when a branch column
 
 ### Requirement: Data caveats
 
-The system SHALL mention material data caveats that affect interpretation, including refund lines and rows with no salesman assigned when present.
+The system SHALL mention material data caveats that affect interpretation, including refund lines, rows with no salesman assigned, and blank invoice numbers when present.
 
 #### Scenario: Refund present
 
@@ -57,6 +67,11 @@ The system SHALL mention material data caveats that affect interpretation, inclu
 
 - **WHEN** some rows have no salesman value
 - **THEN** the summary notes how many lines are excluded from salesman attribution
+
+#### Scenario: Blank invoice number
+
+- **WHEN** some rows have a blank invoice number
+- **THEN** those rows are excluded from the invoice count and the summary notes how many there are
 
 ### Requirement: Weakest-outlet clause
 

@@ -15,6 +15,13 @@ const PARTIAL_CSV = [
 
 const ALL_BAD_CSV = ['region,outlet_id,net_sales_idr', 'R,O1,abc'].join('\n');
 
+const BLANK_ID_CSV = ['region,outlet_id,net_sales_idr', ',O1,100'].join('\n');
+
+const OPTIONAL_BAD_CSV = [
+  'region,outlet_id,net_sales_idr,qty_carton',
+  'R1,O1,100,abc',
+].join('\n');
+
 function setupDom() {
     document.body.innerHTML = `
     <section id="upload-prompt"></section>
@@ -121,6 +128,28 @@ describe('initApp', () => {
     const fault = document.getElementById('fault');
     expect(fault.hidden).toBe(false);
     expect(fault.textContent).toContain('1 row(s) were skipped');
+  });
+
+  it('skips rows with blank required identifiers', async () => {
+    initApp(document, makeAdapters({ text: BLANK_ID_CSV }));
+    await chooseFile();
+    document.getElementById('process-btn').click();
+
+    expect(document.getElementById('dashboard').hidden).toBe(true);
+    const fault = document.getElementById('fault');
+    expect(fault.textContent).toContain('1 row(s) were skipped');
+    expect(fault.textContent).toContain('blank region or outlet ID');
+  });
+
+  it('keeps valid sales when an optional numeric field is invalid', async () => {
+    initApp(document, makeAdapters({ text: OPTIONAL_BAD_CSV }));
+    await chooseFile();
+    document.getElementById('process-btn').click();
+
+    expect(document.getElementById('dashboard').hidden).toBe(false);
+    expect(document.getElementById('summary-text').textContent).toContain('Rp 100');
+    const fault = document.getElementById('fault');
+    expect(fault.textContent).toContain('1 row(s) had an invalid optional numeric value');
   });
 
   it('reports a fault when the file cannot be read', async () => {

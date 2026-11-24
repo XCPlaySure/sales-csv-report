@@ -41,7 +41,7 @@ The system SHALL compute net sales per branch and render a branch breakdown when
 
 ### Requirement: Five lowest outlets
 
-The system SHALL rank outlets by absolute net sales ascending, grouped by outlet id, and show up to five outlets, showing fewer when the file contains fewer than five.
+The system SHALL rank outlets by absolute net sales ascending, grouped by outlet id and region, and show up to five, showing fewer when the file contains fewer.
 
 #### Scenario: Five weakest shown
 
@@ -55,8 +55,13 @@ The system SHALL rank outlets by absolute net sales ascending, grouped by outlet
 
 #### Scenario: Outlet identity
 
-- **WHEN** the same outlet id appears on multiple rows
+- **WHEN** the same outlet id appears on multiple rows in one region
 - **THEN** its rows are combined into a single outlet entry
+
+#### Scenario: Outlet id spans regions
+
+- **WHEN** the same outlet id appears under different region labels
+- **THEN** each region is listed as a separate outlet and the view notes the conflict
 
 ### Requirement: Severity tiers
 
