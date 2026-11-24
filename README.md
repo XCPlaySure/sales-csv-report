@@ -129,11 +129,32 @@ npm run build         # produce the static site in dist/
 npm run preview       # preview the production build locally
 ```
 
+## Hosting on GitHub Pages
+
+GitHub Pages serves the production build at a project-site URL shaped like
+`https://<owner>.github.io/<repo>/`. No custom domain, DNS record, or paid plan
+is required.
+
+The workflow in `.github/workflows/deploy-pages.yml` builds `dist/` and publishes
+it on every push to `main`; it can also be started manually from the Actions
+tab. Set the Pages source to GitHub Actions once in repository settings. The
+build uses relative asset paths, so the app works at a domain root or under the
+project subpath.
+
+Hosted smoke test:
+
+1. Open the public URL over HTTPS.
+2. Choose `sales.csv`.
+3. Confirm the column mapping, then click **Process CSV**.
+4. Check the dashboard, summary, **Copy summary**, and **Send via Telegram**.
+
 ## Directory structure
 
 ```
 sales-csv-report/
-+-- .github/workflows/test.yml   CI: checkout, Node 24, npm ci, coverage
++-- .github/workflows/
+|   +-- test.yml                 CI: checkout, Node 24, npm ci, coverage
+|   +-- deploy-pages.yml         build and publish dist/ to Pages
 +-- .gitignore                   ignores node_modules/, dist/, coverage/
 +-- README.md                    this guide
 +-- index.html                   single page: upload, mapping, dashboard, summary
