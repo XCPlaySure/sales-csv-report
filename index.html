@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sales CSV Report</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <h1>Sales CSV Report</h1>
+      <p class="lede">
+        Upload a sales CSV to see net sales by region and branch, the weakest
+        outlets, and a summary you can forward to a sales manager.
+      </p>
+
+      <section id="upload-prompt">
+        <label for="file-input">Choose a sales CSV file</label>
+        <input id="file-input" type="file" accept=".csv,text/csv" />
+      </section>
+
+      <section id="fault" hidden></section>
+      <section id="mapping" hidden></section>
+      <section id="dashboard" hidden></section>
+
+      <section id="summary-section" hidden>
+        <h2>Summary report</h2>
+        <p id="summary-text"></p>
+        <p id="summary-basis" class="basis"></p>
+        <div class="actions">
+          <button id="copy-btn" type="button">Copy summary</button>
+          <button id="telegram-btn" type="button">Send via Telegram</button>
+        </div>
+        <p class="hint">Telegram sign-in is required; if you are not signed in, use Copy summary instead.</p>
+        <p id="copy-status" role="status"></p>
+      </section>
+    </main>
+    <script type="module" src="/src/entry.js"></script>
+  </body>
+</html>
