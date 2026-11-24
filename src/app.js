@@ -1,7 +1,7 @@
 import { parseCsv, detectMapping, validateMapping, parseRows } from './lib/parse.js';
 import { analyze } from './lib/analyze.js';
 import { buildSummary } from './lib/summary.js';
-import { mappingPanelHtml, dashboardHtml, faultHtml } from './ui/views.js';
+import { mappingPanelHtml, dashboardHtml, faultHtml, warningHtml } from './ui/views.js';
 import { copySummary, selectNode, telegramUrl } from './ui/adapters.js';
 import { summaryBasis } from './lib/summary.js';
 
@@ -91,7 +91,7 @@ export function initApp(doc, adapters) {
       return;
     }
 
-    const { records, skipped, invalidOptionals } = parseRows(state.rows, mapping);
+    const { records, skipped, invalidOptionalCount } = parseRows(state.rows, mapping);
     if (records.length === 0) {
       const detail = skippedMessage(skipped);
       showFault(`No usable data rows were found. ${detail} Check the mapped columns and re-upload the file.`);
@@ -116,13 +116,13 @@ export function initApp(doc, adapters) {
     if (skipped.length > 0) {
       notes.push(`${skippedMessage(skipped)} Fix the file and re-upload for complete results.`);
     }
-    if (invalidOptionals.length > 0) {
+    if (invalidOptionalCount > 0) {
       notes.push(
-        `${invalidOptionals.length} row(s) had an invalid optional numeric value; that field was omitted.`,
+        `${invalidOptionalCount} row(s) had an invalid optional numeric value; that field was omitted.`,
       );
     }
     if (notes.length > 0) {
-      faultEl.innerHTML = faultHtml(notes.join(' '));
+      faultEl.innerHTML = warningHtml(notes.join(' '));
       faultEl.hidden = false;
     } else {
       faultEl.innerHTML = '';

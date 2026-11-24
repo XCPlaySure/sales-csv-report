@@ -59,13 +59,15 @@ describe('selectNode', () => {
 });
 
 describe('telegramUrl', () => {
-  it('encodes the summary into a share link', () => {
-    expect(telegramUrl('a b&c')).toBe('https://t.me/share/url?text=a%20b%26c');
+  it('encodes the summary and page url into a share link', () => {
+    expect(telegramUrl('a b&c', 'https://example.test/')).toBe(
+      'https://t.me/share/url?url=https%3A%2F%2Fexample.test%2F&text=a%20b%26c',
+    );
   });
 
-  it('includes the page url when provided', () => {
-    expect(telegramUrl('a b', 'https://example.test/')).toBe(
-      'https://t.me/share/url?url=https%3A%2F%2Fexample.test%2F&text=a%20b',
+  it('encodes a subpath url', () => {
+    expect(telegramUrl('hi', 'https://example.test/app/')).toBe(
+      'https://t.me/share/url?url=https%3A%2F%2Fexample.test%2Fapp%2F&text=hi',
     );
   });
 });

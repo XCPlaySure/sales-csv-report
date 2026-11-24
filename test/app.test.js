@@ -22,6 +22,12 @@ const OPTIONAL_BAD_CSV = [
   'R1,O1,100,abc',
 ].join('\n');
 
+const ALL_BLANK_INVOICE_CSV = [
+  'region,outlet_id,net_sales_idr,invoice_no',
+  'R1,O1,100,',
+  'R2,O2,50,   ',
+].join('\n');
+
 function setupDom() {
     document.body.innerHTML = `
     <section id="upload-prompt"></section>
@@ -116,6 +122,7 @@ describe('initApp', () => {
 
     const fault = document.getElementById('fault');
     expect(fault.hidden).toBe(false);
+    expect(fault.querySelector('.fault')).not.toBeNull();
     expect(fault.textContent).toContain('No usable data rows');
   });
 
@@ -127,6 +134,7 @@ describe('initApp', () => {
     expect(document.getElementById('dashboard').hidden).toBe(false);
     const fault = document.getElementById('fault');
     expect(fault.hidden).toBe(false);
+    expect(fault.querySelector('.warning')).not.toBeNull();
     expect(fault.textContent).toContain('1 row(s) were skipped');
   });
 
@@ -137,6 +145,7 @@ describe('initApp', () => {
 
     expect(document.getElementById('dashboard').hidden).toBe(true);
     const fault = document.getElementById('fault');
+    expect(fault.querySelector('.fault')).not.toBeNull();
     expect(fault.textContent).toContain('1 row(s) were skipped');
     expect(fault.textContent).toContain('blank region or outlet ID');
   });
@@ -149,7 +158,19 @@ describe('initApp', () => {
     expect(document.getElementById('dashboard').hidden).toBe(false);
     expect(document.getElementById('summary-text').textContent).toContain('Rp 100');
     const fault = document.getElementById('fault');
+    expect(fault.querySelector('.warning')).not.toBeNull();
     expect(fault.textContent).toContain('1 row(s) had an invalid optional numeric value');
+  });
+
+  it('omits invoice counts when every invoice id is blank', async () => {
+    initApp(document, makeAdapters({ text: ALL_BLANK_INVOICE_CSV }));
+    await chooseFile();
+    document.getElementById('process-btn').click();
+
+    expect(document.getElementById('dashboard').hidden).toBe(false);
+    expect(document.getElementById('dashboard').textContent).not.toContain('Invoices:');
+    expect(document.getElementById('summary-text').textContent).not.toContain('invoices');
+    expect(document.getElementById('summary-text').textContent).toContain('no invoice number');
   });
 
   it('reports a fault when the file cannot be read', async () => {

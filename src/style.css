@@ -102,6 +102,12 @@ thead th {
   color: #7a271a;
 }
 
+.warning {
+  border-left: 4px solid #b54708;
+  padding-left: 0.75rem;
+  color: #7a271a;
+}
+
 .actions {
   display: flex;
   gap: 0.75rem;

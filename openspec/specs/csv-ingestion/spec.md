@@ -88,12 +88,17 @@ The system SHALL treat branch, date, qty, discount, outlet name, salesman, brand
 
 ### Requirement: Row parsing and fault reporting
 
-The system SHALL skip rows whose required identifiers are blank or whose required numeric values cannot be parsed, and report them. Invalid optional numeric values SHALL be omitted from those fields with a warning while the row's required sales data is kept.
+The system SHALL skip rows whose required identifiers are blank or whose required numeric values are invalid, and report them. Numeric cells MUST use plain decimal notation with an optional sign. Invalid optional numeric values SHALL be omitted from those fields with a warning while the row's required sales data is kept.
 
 #### Scenario: Invalid required numeric value
 
-- **WHEN** net sales, or gross sales and discount when net sales is derived, is non-numeric
+- **WHEN** net sales, or gross sales and discount when net sales is derived, cannot be parsed as plain decimal
 - **THEN** that row is skipped and the system reports how many rows were skipped and why
+
+#### Scenario: Non-decimal numeric notation
+
+- **WHEN** a numeric cell uses exponents, hexadecimal, Infinity, or thousands separators
+- **THEN** it is treated as invalid and is skipped or omitted with a warning
 
 #### Scenario: Blank required identifier
 

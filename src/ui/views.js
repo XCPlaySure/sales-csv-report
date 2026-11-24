@@ -56,7 +56,7 @@ export function dashboardHtml(agg) {
   parts.push(`<li>Net sales: <strong>${formatIDR(totals.net)}</strong></li>`);
   parts.push(`<li>Gross sales: <strong>${formatIDR(totals.gross)}</strong></li>`);
   parts.push(`<li>Discounts: <strong>${formatIDR(totals.discount)}</strong></li>`);
-  if (totals.invoices != null) parts.push(`<li>Invoices: <strong>${totals.invoices}</strong></li>`);
+  if (totals.invoices > 0) parts.push(`<li>Invoices: <strong>${totals.invoices}</strong></li>`);
   parts.push(`<li>Outlets: <strong>${totals.outlets}</strong></li>`);
   parts.push('</ul>');
 
@@ -149,4 +149,8 @@ function tierLegendHtml() {
 
 export function faultHtml(message) {
   return `<div class="fault"><strong>Problem with this CSV file.</strong> ${escapeHtml(message)}</div>`;
+}
+
+export function warningHtml(message) {
+  return `<div class="warning"><strong>Note about this CSV file.</strong> ${escapeHtml(message)}</div>`;
 }

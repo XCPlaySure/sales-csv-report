@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { analyze } from '../src/lib/analyze.js';
-import { dashboardHtml, mappingPanelHtml, faultHtml } from '../src/ui/views.js';
+import { dashboardHtml, mappingPanelHtml, faultHtml, warningHtml } from '../src/ui/views.js';
 import { validateMapping } from '../src/lib/parse.js';
 import * as fixtures from './fixtures.js';
 
@@ -46,6 +46,11 @@ describe('dashboardHtml', () => {
     const html = dashboardFor(fixtures.zero);
     expect(html).toContain('Net sales are zero');
     expect(html).toContain('Share is unavailable');
+  });
+
+  it('hides the invoice headline when no usable invoice ids exist', () => {
+    const html = dashboardFor(fixtures.blankInvoice);
+    expect(html).not.toContain('Invoices:');
   });
 
   it('renders the empty state', () => {
@@ -118,10 +123,17 @@ describe('mappingPanelHtml', () => {
   });
 });
 
-describe('faultHtml', () => {
+describe('faultHtml and warningHtml', () => {
   it('frames the problem as the file and escapes the message', () => {
     const html = faultHtml('<bad> file');
     expect(html).toContain('Problem with this CSV file.');
     expect(html).toContain('&lt;bad&gt; file');
+  });
+
+  it('frames nonfatal notes as warnings and escapes the message', () => {
+    const html = warningHtml('<bad> value');
+    expect(html).toContain('class="warning"');
+    expect(html).toContain('Note about this CSV file.');
+    expect(html).toContain('&lt;bad&gt; value');
   });
 });

@@ -156,18 +156,8 @@ export function analyze(records, mapping) {
   const sortedOutlets = [...outlets].sort((a, b) => a.net - b.net);
   const weakest = sortedOutlets.slice(0, 5);
   const hasCritical = weakest.some((outlet) => outlet.tier === 'CRITICAL');
-  const criticalCount = outlets.filter((outlet) => outlet.tier === 'CRITICAL').length;
-
-  const variantMap = new Map();
-  for (const region of regions) {
-    const key = region.name.trim().toUpperCase();
-    if (!variantMap.has(key)) variantMap.set(key, []);
-    variantMap.get(key).push(region.name);
-  }
-  const regionVariants = [...variantMap.values()].filter((names) => names.length > 1);
 
   const months = [...monthMap.keys()].sort();
-  const monthSeries = months.map((month) => ({ month, net: monthMap.get(month) }));
   let growth = null;
   let nonConsecutiveMonths = false;
   let growthBaselineInvalid = false;
@@ -199,7 +189,6 @@ export function analyze(records, mapping) {
     weakest,
     hasCritical,
     months,
-    monthSeries,
     growth,
     flags: {
       hasDate,

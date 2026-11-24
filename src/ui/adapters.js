@@ -25,8 +25,7 @@ export function selectNode(node, doc) {
 }
 
 export function telegramUrl(text, url) {
-  const shareUrl = url ? `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` : `https://t.me/share/url?text=${encodeURIComponent(text)}`;
-  return shareUrl;
+  return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 }
 
 export function browserAdapters(win) {

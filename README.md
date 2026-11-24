@@ -32,6 +32,10 @@ salesman. It adapts to those cases instead of rejecting the file.
   and reports them as a file issue with guidance to fix and re-upload. Invalid
   optional numeric values are omitted from that field with a warning, while the
   row's net sales stay in the totals.
+- Numeric cells must use plain decimal notation with an optional sign, such as
+  `940500`, `-528000`, or `1234.50`. Formatted values such as `1.728.036.900`
+  and `1.728.036,90`, plus exponents and hexadecimal notation, are not accepted
+  as input. Indonesian formatting applies to output only.
 
 ### Analysis
 
@@ -90,7 +94,7 @@ salesman. It adapts to those cases instead of rejecting the file.
 
 ### Quality gates
 
-- 112 tests across 10 files, with 100% line, branch, function, and statement
+- 117 tests across 10 files, with 100% line, branch, function, and statement
   coverage enforced by Istanbul.
 - A golden test runs the full pipeline against the bundled `sales.csv`
   (1,891 rows, 15 columns) and checks known figures: net `Rp 1.728.036.900`,

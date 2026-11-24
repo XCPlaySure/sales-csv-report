@@ -16,8 +16,6 @@ export const FIELD_SYNONYMS = {
   net_sales: ['netsales', 'netsalesidr', 'net', 'netrevenue', 'omzet', 'netto', 'penjualan'],
 };
 
-export const REQUIRED_FIELDS = ['region', 'outlet_id', 'net_sales'];
-
 export const REQUIRED_TEXT_FIELDS = ['region', 'outlet_id'];
 
 export const NUMERIC_FIELDS = [
@@ -27,6 +25,8 @@ export const NUMERIC_FIELDS = [
   'discount',
   'net_sales',
 ];
+
+const PLAIN_DECIMAL = /^[+-]?\d+(?:\.\d+)?$/;
 
 const TEXT_FIELDS = [
   'region',
@@ -165,29 +165,27 @@ export function validateMapping(mapping) {
 export function parseRows(rows, mapping) {
   const records = [];
   const skipped = [];
-  const invalidOptionals = [];
+  let invalidOptionalCount = 0;
   const netDerived =
     mapping.net_sales == null && mapping.gross_sales != null && mapping.discount != null;
-  const requiredNumeric = new Set(
-    netDerived ? ['gross_sales', 'discount'] : ['net_sales'],
-  );
+  const requiredNumeric = new Set(netDerived ? ['gross_sales', 'discount'] : ['net_sales']);
   const numericMapped = NUMERIC_FIELDS.filter((field) => mapping[field] != null);
 
   rows.forEach((row, rowIndex) => {
     const record = {};
-    const rowOptionals = [];
+    let rowInvalidOptionals = 0;
     let badField = null;
 
     for (const field of numericMapped) {
-      const raw = row[mapping[field]];
-      const blank = raw === undefined || String(raw).trim() === '';
-      const value = blank ? NaN : Number(raw);
-      if (Number.isNaN(value)) {
+      const text = String(row[mapping[field]] ?? '').trim();
+      const blank = text === '';
+      const value = blank || !PLAIN_DECIMAL.test(text) ? NaN : Number(text);
+      if (!Number.isFinite(value)) {
         if (requiredNumeric.has(field)) {
           badField = field;
           break;
         }
-        if (!blank) rowOptionals.push(field);
+        if (!blank) rowInvalidOptionals += 1;
         continue;
       }
       record[field] = value;
@@ -212,16 +210,14 @@ export function parseRows(rows, mapping) {
       return;
     }
 
+    invalidOptionalCount += rowInvalidOptionals;
+
     if (netDerived) {
       record.net_sales = record.gross_sales - record.discount;
-    }
-
-    for (const field of rowOptionals) {
-      invalidOptionals.push({ rowIndex, field });
     }
 
     records.push(record);
   });
 
-  return { records, skipped, invalidOptionals };
+  return { records, skipped, invalidOptionalCount };
 }
